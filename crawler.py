@@ -27,6 +27,6 @@ import time
 b = Bikestations()
 print "press ctrl-c to stop"
 while (True):
-    print "add bikes"+ time.strftime("%Y-%m-%d %H:%M:%S")
+    print "add news bikes: "+ time.strftime("%Y-%m-%d %H:%M:%S")
     b.addbikes()
     time.sleep(10)

@@ -26,9 +26,14 @@ from pysqlite2 import dbapi2 as sqlite3
 import requests, datetime
 
 class Bikestations():
-    cities = ["trento","rovereto","pergine_valsugana"]
     url = "https://os.smartcommunitylab.it/core.mobility/bikesharing/"
     db = "bikestations_trentino.sqlite"
+    cities = [
+        "trento",
+        "rovereto",
+        "pergine_valsugana"
+    ]
+    defaultCity = cities[0]
     wgs84 = 4326
 
     def __init__(self):
@@ -93,12 +98,13 @@ class Bikestations():
                     longitude = row['position'][1]
                     geometryfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude,self.wgs84)
                     insertsql = '''
-                        INSERT INTO stations VALUES (%s,'%s','%s','%s', %s, %s, %s, %s);
+                        INSERT INTO stations VALUES ('%s','%s','%s','%s', %s, %s, %s, %s);
                     ''' % (idstation, city, name, address, latitude, longitude, slots, geometryfromtext)
                     self.cur.execute(insertsql)
             self.con.commit()
 
-    def addbikes(self, city):
+    def addbikes(self, city = None):
+        city = city if city is not None else self.defaultCity
         urlc = self.url + city
         r = requests.get(urlc)
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -109,7 +115,7 @@ class Bikestations():
             slots = row['slots']
             date = now
             insertsql = '''
-                INSERT INTO bikeuse (idstation, bikes, slots, day) VALUES (%s,%s,%s,'%s')
+                INSERT INTO bikeuse (idstation, bikes, slots, day) VALUES ('%s',%s,%s,'%s')
             ''' % (idstation, bikes, slots, date)
             self.cur.execute(insertsql)
         self.con.commit()
