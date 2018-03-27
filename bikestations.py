@@ -74,7 +74,6 @@ class Bikestations():
                 idstation TEXT,
                 bikes INTEGER,
                 slots INTEGER,
-                day TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         '''
@@ -96,10 +95,10 @@ class Bikestations():
                     name = row['name']
                     latitude = row['position'][0]
                     longitude = row['position'][1]
-                    geometryfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude,self.wgs84)
+                    geomfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude, self.wgs84)
                     insertsql = '''
                         INSERT INTO stations VALUES ('%s','%s','%s','%s', %s, %s, %s, %s);
-                    ''' % (idstation, city, name, address, latitude, longitude, slots, geometryfromtext)
+                    ''' % (idstation, city, name, address, latitude, longitude, slots, geomfromtext)
                     self.cur.execute(insertsql)
             self.con.commit()
 
@@ -107,16 +106,15 @@ class Bikestations():
         city = city if city is not None else self.defaultCity
         urlc = self.url + city
         r = requests.get(urlc)
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         rows =  r.json()
         for row in rows:
             idstation = row['id']
             bikes = row['bikes']
             slots = row['slots']
-            date = now
             insertsql = '''
-                INSERT INTO bikeuse (idstation, bikes, slots, day) VALUES ('%s',%s,%s,'%s')
-            ''' % (idstation, bikes, slots, date)
+                INSERT INTO bikeuse (idstation, bikes, slots) 
+                    VALUES ('%s', %s, %s)
+            ''' % (idstation, bikes, slots)
             self.cur.execute(insertsql)
         self.con.commit()
 
