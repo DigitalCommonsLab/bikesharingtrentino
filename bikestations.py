@@ -44,7 +44,7 @@ class Bikestations():
         print 'load mod_spatialite...'
         self.cur.execute('SELECT load_extension("mod_spatialite")');
         geo = self.cur.execute('''
-            SELECT count(name) 
+            SELECT COUNT(name) 
             FROM sqlite_master 
             WHERE type='table' 
                 AND name='geometry_columns';
@@ -55,7 +55,7 @@ class Bikestations():
 
         print 'create stations...'
         createstations = '''
-            CREATE TABLE if not exists stations (
+            CREATE TABLE IF NOT EXISTS stations (
                 id TEXT NOT NULL,
                 city TEXT,
                 name TEXT,
@@ -69,7 +69,7 @@ class Bikestations():
         
         print 'create bikeuse...'
         createbikesuse= '''
-            CREATE TABLE if not exists bikeuse (
+            CREATE TABLE IF NOT EXISTS bikeuse (
                 id INTEGER PRIMARY KEY ASC,
                 idstation TEXT,
                 bikes INTEGER,
