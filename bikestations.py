@@ -79,17 +79,18 @@ class Bikestations():
         cname = self.cur.execute('SELECT COUNT(name) FROM stations').fetchone()[0]
         if cname == 0:
             for city in self.cities:
+
                 print 'insert stations for city '+ city
                 urlc = self.url + city
                 r = requests.get(urlc)
-                data =  r.json()
-                for datum in data:
-                    idstation = datum['id']
-                    address = datum['address']
-                    slots = datum['slots']
-                    name = datum['name']
-                    latitude = datum['position'][0]
-                    longitude = datum['position'][1]
+                rows =  r.json()
+                for row in rows:
+                    idstation = row['id']
+                    address = row['address']
+                    slots = row['slots']
+                    name = row['name']
+                    latitude = row['position'][0]
+                    longitude = row['position'][1]
                     geometryfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude,self.wgs84)
                     insertsql = '''
                         INSERT INTO stations VALUES (%s,'%s','%s','%s', %s, %s, %s, %s);
@@ -100,12 +101,12 @@ class Bikestations():
     def addbikes(self, city):
         urlc = self.url + city
         r = requests.get(urlc)
-        data =  r.json()
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        for datum in data:
-            idstation = datum["id"]
-            bikes = datum["bikes"]
-            slots = datum["slots"]
+        rows =  r.json()
+        for row in rows:
+            idstation = row['id']
+            bikes = row['bikes']
+            slots = row['slots']
             date = now
             insertsql = '''
                 INSERT INTO bikeuse (idstation, bikes, slots, day) VALUES (%s,%s,%s,'%s')
