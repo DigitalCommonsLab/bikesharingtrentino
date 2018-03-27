@@ -28,7 +28,7 @@ import requests, datetime
 class Bikestations():
     cities = ["trento","rovereto","pergine_valsugana"]
     url = "https://os.smartcommunitylab.it/core.mobility/bikesharing/"
-    db = "bikestationstrentino.sqlite"
+    db = "bikestations_trentino.sqlite"
     wgs84 = 4326
 
     def __init__(self):
@@ -51,7 +51,7 @@ class Bikestations():
         print 'create stations...'
         createstations = '''
             CREATE TABLE if not exists stations (
-                id INTEGER NOT NULL,
+                id TEXT NOT NULL,
                 city TEXT,
                 name TEXT,
                 address TEXT,
@@ -66,7 +66,7 @@ class Bikestations():
         createbikesuse= '''
             CREATE TABLE if not exists bikeuse (
                 id INTEGER PRIMARY KEY ASC,
-                idstation INTEGER,
+                idstation TEXT,
                 bikes INTEGER,
                 slots INTEGER,
                 day TEXT,
