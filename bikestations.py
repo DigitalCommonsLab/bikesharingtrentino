@@ -22,38 +22,68 @@ THE SOFTWARE.
 """
 #from __future__ import unicode_literals
 #from builtins import str
-from pysqlite2 import dbapi2 as sqlite3   
+from pysqlite2 import dbapi2 as sqlite3
 import requests, datetime
+
 class Bikestations():
     cities = ["trento","rovereto","pergine_valsugana"]
     url = "https://os.smartcommunitylab.it/core.mobility/bikesharing/"
-    wgs84 = 4326
     db = "bikestationstrentino.sqlite"
+    wgs84 = 4326
+
     def __init__(self):
-        self.con=sqlite3.connect(self.db)        
+        self.con = sqlite3.connect(self.db)
         self.con.enable_load_extension(True)
         self.cur = self.con.cursor()
+
+        print 'load mod_spatialite...'
         self.cur.execute('SELECT load_extension("mod_spatialite")');
-        geo = self.cur.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='geometry_columns';").fetchall()[0][0]
-        if (geo == 0):
+        geo = self.cur.execute('''
+            SELECT count(name) 
+            FROM sqlite_master 
+            WHERE type='table' 
+                AND name='geometry_columns';
+        ''')
+        if (geo.fetchall()[0][0] == 0):
+            print 'init spatialite...'
             self.cur.execute('SELECT InitSpatialMetadata();')
+
+        print 'create stations...'
         createstations = '''
-        CREATE TABLE if not exists stations (id INTEGER NOT NULL, city TEXT, name TEXT, address TEXT, latitude REAL, longitude REAL, slots INTEGER);
+            CREATE TABLE if not exists stations (
+                id INTEGER NOT NULL,
+                city TEXT,
+                name TEXT,
+                address TEXT,
+                latitude REAL,
+                longitude REAL,
+                slots INTEGER
+            );
         '''
         addgeometry = "SELECT AddGeometryColumn('stations', 'geometry', %s, 'POINT', 'XY');" % self.wgs84
+        
+        print 'create bikeuse...'
         createbikesuse= '''
-        CREATE TABLE if not exists bikeuse (id INTEGER PRIMARY KEY ASC, idstation INTEGER, bikes INTEGER, slots INTEGER, day TEXT);
+            CREATE TABLE if not exists bikeuse (
+                id INTEGER PRIMARY KEY ASC,
+                idstation INTEGER,
+                bikes INTEGER,
+                slots INTEGER,
+                day TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
         '''
         self.cur.execute(createstations);
         self.cur.execute(addgeometry);
         self.cur.execute(createbikesuse);
-        cname = self.cur.execute('select count(name) from stations').fetchone()[0]
+        cname = self.cur.execute('SELECT COUNT(name) FROM stations').fetchone()[0]
         if cname == 0:
             for city in self.cities:
+                print 'insert stations for city '+ city
                 urlc = self.url + city
                 r = requests.get(urlc)
                 data =  r.json()
-                for datum in data: 
+                for datum in data:
                     idstation = datum['id']
                     address = datum['address']
                     slots = datum['slots']
@@ -62,22 +92,24 @@ class Bikestations():
                     longitude = datum['position'][1]
                     geometryfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude,self.wgs84)
                     insertsql = '''
-                    INSERT INTO stations VALUES (%s,'%s','%s','%s', %s, %s, %s, %s);
-                    ''' % (idstation,city,name,address,latitude,longitude,slots,geometryfromtext)
+                        INSERT INTO stations VALUES (%s,'%s','%s','%s', %s, %s, %s, %s);
+                    ''' % (idstation, city, name, address, latitude, longitude, slots, geometryfromtext)
                     self.cur.execute(insertsql)
             self.con.commit()
-                
-    def addbikes(self):
-        r = requests.get("https://os.smartcommunitylab.it/core.mobility/bikesharing/trento")
+
+    def addbikes(self, city):
+        urlc = self.url + city
+        r = requests.get(urlc)
         data =  r.json()
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         for datum in data:
             idstation = datum["id"]
             bikes = datum["bikes"]
             slots = datum["slots"]
-            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            date = now
             insertsql = '''
-            INSERT INTO bikeuse (idstation, bikes, slots, day) VALUES (%s,%s,%s,'%s')
-            ''' % (idstation, bikes,slots,date)
+                INSERT INTO bikeuse (idstation, bikes, slots, day) VALUES (%s,%s,%s,'%s')
+            ''' % (idstation, bikes, slots, date)
             self.cur.execute(insertsql)
         self.con.commit()
 
