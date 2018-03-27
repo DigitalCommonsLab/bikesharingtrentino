@@ -65,7 +65,7 @@ class Bikestations():
                 slots INTEGER
             );
         '''
-        addgeometry = "SELECT AddGeometryColumn('stations', 'geometry', %s, 'POINT', 'XY');" % self.wgs84
+        addgeometry = "SELECT AddGeometryColumn('stations', 'geom', %s, 'POINT', 'XY');" % self.wgs84
         
         print 'create bikeuse...'
         createbikesuse= '''
@@ -93,8 +93,8 @@ class Bikestations():
                     address = row['address']
                     slots = row['slots']
                     name = row['name']
-                    latitude = row['position'][0]
-                    longitude = row['position'][1]
+                    latitude = row['position'][1]
+                    longitude = row['position'][0]
                     geomfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude, self.wgs84)
                     insertsql = '''
                         INSERT INTO stations VALUES ('%s','%s','%s','%s', %s, %s, %s, %s);
