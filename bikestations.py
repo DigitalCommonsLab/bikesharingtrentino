@@ -31,7 +31,11 @@ class Bikestations():
     cities = [
         "trento",
         "rovereto",
-        "pergine_valsugana"
+        "pergine_valsugana",
+        "lavis",
+        "mezzocorona",
+        "mezzolombardo",
+        "sanmichelealladige"
     ]
     defaultCity = cities[0]
     wgs84 = 4326

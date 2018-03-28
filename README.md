@@ -4,3 +4,8 @@
 
 
 https://pysqlite.readthedocs.io/en/latest/sqlite3.html
+
+
+# Usage
+
+./start.sh

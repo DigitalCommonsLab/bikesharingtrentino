@@ -29,4 +29,4 @@ print "press ctrl-c to stop"
 while (True):
     print "add news bikes: "+ time.strftime("%Y-%m-%d %H:%M:%S")
     b.addbikes()
-    time.sleep(10)
+    time.sleep(60)
