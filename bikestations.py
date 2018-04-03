@@ -46,18 +46,17 @@ class Bikestations():
         self.cur = self.con.cursor()
 
         print 'load mod_spatialite...'
-        self.cur.execute('SELECT load_extension("mod_spatialite")');
-        geo = self.cur.execute('''
+        self.cur.execute('SELECT load_extension("mod_spatialite")')
+
+        check = self.cur.execute('''
             SELECT COUNT(name) 
             FROM sqlite_master 
-            WHERE type='table' 
-                AND name='geometry_columns';
+            WHERE type='table' AND name='geometry_columns';
         ''')
-        if (geo.fetchall()[0][0] == 0):
+        if (check.fetchall()[0][0] == 0):
             print 'init spatialite...'
             self.cur.execute('SELECT InitSpatialMetadata();')
 
-        print 'create stations...'
         createstations = '''
             CREATE TABLE IF NOT EXISTS stations (
                 id TEXT NOT NULL,
@@ -69,9 +68,7 @@ class Bikestations():
                 slots INTEGER
             );
         '''
-        addgeometry = "SELECT AddGeometryColumn('stations', 'geom', %s, 'POINT', 'XY');" % self.wgs84
-        
-        print 'create bikeuse...'
+        addGeometry = "SELECT AddGeometryColumn('stations', 'geom', %s, 'POINT', 'XY');" % self.wgs84
         createbikesuse= '''
             CREATE TABLE IF NOT EXISTS bikeuse (
                 id INTEGER PRIMARY KEY ASC,
@@ -82,9 +79,18 @@ class Bikestations():
             );
         '''
         self.cur.execute(createstations);
-        self.cur.execute(addgeometry);
-        self.cur.execute(createbikesuse);
-        cname = self.cur.execute('SELECT COUNT(name) FROM stations').fetchone()[0]
+        check = self.cur.execute('''
+            SELECT COUNT(name) 
+            FROM sqlite_master 
+            WHERE type='trigger' AND name = 'ggi_stations_geom';
+        ''')
+        if (check.fetchall()[0][0] == 0):
+            print 'create table stations...'
+            self.cur.execute(addGeometry)
+
+        print 'create table bikeuse...'
+        self.cur.execute(createbikesuse)
+        cname = self.cur.execute("SELECT COUNT(name) FROM stations").fetchone()[0]
         if cname == 0:
             for city in self.cities:
 
