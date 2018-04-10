@@ -57,7 +57,7 @@ class Bikestations():
             print 'init spatialite...'
             self.cur.execute('SELECT InitSpatialMetadata();')
 
-        createstations = '''
+        create_stations = '''
             CREATE TABLE IF NOT EXISTS stations (
                 id TEXT NOT NULL,
                 city TEXT,
@@ -68,8 +68,8 @@ class Bikestations():
                 slots INTEGER
             );
         '''
-        addGeometry = "SELECT AddGeometryColumn('stations', 'geom', %s, 'POINT', 'XY');" % self.wgs84
-        createbikesuse= '''
+        addGeometry_stations = "SELECT AddGeometryColumn('stations', 'geom', %s, 'POINT', 'XY');" % self.wgs84
+        create_bikesuse= '''
             CREATE TABLE IF NOT EXISTS bikeuse (
                 id INTEGER PRIMARY KEY ASC,
                 idstation TEXT,
@@ -78,7 +78,15 @@ class Bikestations():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         '''
-        self.cur.execute(createstations);
+        create_bikesusegeo= '''
+            CREATE VIEW IF NOT EXISTS bikeusegeo AS 
+            	SELECT stations.id, stations.geom, bikeuse.timestamp, bikeuse.bikes, bikeuse.slots 
+            	FROM bikeuse, stations 
+            	WHERE bikeuse.idstation = stations.id;
+        '''        
+        addGeometry_bikeuse = "SELECT AddGeometryColumn('bikeusegeo', 'geom', %s, 'POINT', 'XY');" % self.wgs84
+        
+        self.cur.execute(create_stations);
         check = self.cur.execute('''
             SELECT COUNT(name) 
             FROM sqlite_master 
@@ -86,10 +94,22 @@ class Bikestations():
         ''')
         if (check.fetchall()[0][0] == 0):
             print 'create table stations...'
-            self.cur.execute(addGeometry)
+            self.cur.execute(addGeometry_stations)
+
+        self.cur.execute(create_bikesusegeo)
+
+        # check = self.cur.execute('''
+        #     SELECT COUNT(name) 
+        #     FROM sqlite_master 
+        #     WHERE type='trigger' AND name = 'ggi_bikeusegeo_geom';
+        # ''')
+        # if (check.fetchall()[0][0] == 0):
+        #     print 'create table bikeusegeo...'
+        #self.cur.execute(addGeometry_bikeuse)
 
         print 'create table bikeuse...'
-        self.cur.execute(createbikesuse)
+        self.cur.execute(create_bikesuse)
+        
         cname = self.cur.execute("SELECT COUNT(name) FROM stations").fetchone()[0]
         if cname == 0:
             for city in self.cities:
