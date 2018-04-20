@@ -44,14 +44,13 @@ class Bikestations():
         self.con = sqlite3.connect(self.db)
         self.con.enable_load_extension(True)
         self.cur = self.con.cursor()
-
         print 'load mod_spatialite...'
         self.cur.execute('SELECT load_extension("mod_spatialite")')
 
         check = self.cur.execute('''
             SELECT COUNT(name) 
             FROM sqlite_master 
-            WHERE type='table' AND name='geometry_columns';
+            WHERE type = 'table' AND name = 'geometry_columns';
         ''')
         if (check.fetchall()[0][0] == 0):
             print 'init spatialite...'
@@ -80,17 +79,17 @@ class Bikestations():
         '''
         create_bikesusegeo= '''
             CREATE VIEW IF NOT EXISTS bikeusegeo AS 
-            	SELECT stations.id, stations.geom, bikeuse.timestamp, bikeuse.bikes, bikeuse.slots 
-            	FROM bikeuse, stations 
-            	WHERE bikeuse.idstation = stations.id;
-        '''        
-        addGeometry_bikeuse = "SELECT AddGeometryColumn('bikeusegeo', 'geom', %s, 'POINT', 'XY');" % self.wgs84
+            SELECT stations.id, stations.geom AS the_geom, bikeuse.timestamp, bikeuse.bikes, bikeuse.slots 
+            FROM bikeuse, stations 
+            WHERE bikeuse.idstation = stations.id;
+        '''
+        addGeometry_bikeusegeo = "SELECT AddGeometryColumn('bikeusegeo', 'geom', %s, 'POINT', 'XY');" % self.wgs84
         
         self.cur.execute(create_stations);
         check = self.cur.execute('''
             SELECT COUNT(name) 
             FROM sqlite_master 
-            WHERE type='trigger' AND name = 'ggi_stations_geom';
+            WHERE type = 'trigger' AND name = 'ggi_stations_geom';
         ''')
         if (check.fetchall()[0][0] == 0):
             print 'create table stations...'
@@ -105,7 +104,7 @@ class Bikestations():
         # ''')
         # if (check.fetchall()[0][0] == 0):
         #     print 'create table bikeusegeo...'
-        #self.cur.execute(addGeometry_bikeuse)
+        self.cur.execute(addGeometry_bikeusegeo)
 
         print 'create table bikeuse...'
         self.cur.execute(create_bikesuse)
@@ -113,9 +112,9 @@ class Bikestations():
         cname = self.cur.execute("SELECT COUNT(name) FROM stations").fetchone()[0]
         if cname == 0:
             for city in self.cities:
-
                 print 'insert stations for city '+ city
                 urlc = self.url + city
+                print urlc
                 r = requests.get(urlc)
                 rows =  r.json()
                 for row in rows:
@@ -125,11 +124,10 @@ class Bikestations():
                     name = row['name']
                     latitude = row['position'][1]
                     longitude = row['position'][0]
-                    geomfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude, self.wgs84)
-                    insertsql = '''
-                        INSERT INTO stations VALUES ('%s','%s','%s','%s', %s, %s, %s, %s);
-                    ''' % (idstation, city, name, address, latitude, longitude, slots, geomfromtext)
-                    self.cur.execute(insertsql)
+                    #geomfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude, self.wgs84)
+                    insertsql = "INSERT INTO stations VALUES (?,?,?,?,?,?,?, GeomFromText('POINT(%f %f)', %u) );" % (latitude, longitude, self.wgs84)
+                    insertvals = (idstation, city, name, address, latitude, longitude, slots)
+                    self.cur.execute(insertsql, insertvals)
             self.con.commit()
 
     def addbikes(self, city = None):
@@ -147,4 +145,3 @@ class Bikestations():
             ''' % (idstation, bikes, slots)
             self.cur.execute(insertsql)
         self.con.commit()
-
