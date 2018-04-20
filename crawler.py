@@ -24,11 +24,12 @@ THE SOFTWARE.
 from bikestations import Bikestations
 import time
 
-count=1
+count=0
 
 b = Bikestations()
 print "press ctrl-c to stop"
 while (True):
-    print "add news bikes: %s %d " % (time.strftime("%Y-%m-%d %H:%M:%S"), ++count)
-    b.addbikes()
-    time.sleep(60)
+    count += 1
+    print "add news bikes: %s %d " % (time.strftime("%Y-%m-%d %H:%M:%S"), count)
+    #b.addbikes()
+    time.sleep(1)
