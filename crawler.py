@@ -31,4 +31,4 @@ while (True):
     count += 1
     print "add news bikes: %s %d " % (time.strftime("%Y-%m-%d %H:%M:%S"), count)
     b.addbikes()
-    time.sleep(1)
+    time.sleep(60)
