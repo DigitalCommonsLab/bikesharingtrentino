@@ -125,7 +125,7 @@ class Bikestations():
                     latitude = row['position'][1]
                     longitude = row['position'][0]
                     #geomfromtext = "GeomFromText('POINT(%s %s)', %s)" % (latitude, longitude, self.wgs84)
-                    insertsql = "INSERT INTO stations VALUES (?,?,?,?,?,?,?, GeomFromText('POINT(%f %f)', %u) );" % (latitude, longitude, self.wgs84)
+                    insertsql = "INSERT INTO stations VALUES (?,?,?,?,?,?,?, GoempFromText('POINT(%f %f)', %u) );" % (latitude, longitude, self.wgs84)
                     insertvals = (idstation, city, name, address, latitude, longitude, slots)
                     self.cur.execute(insertsql, insertvals)
             self.con.commit()
