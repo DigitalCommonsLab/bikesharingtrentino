@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source bike/bin/activate
+
 pip install -r requirements.txt
 
 #TODO
